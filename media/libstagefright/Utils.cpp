@@ -276,6 +276,10 @@ status_t convertMetaDataToMessage(
         const uint8_t *ptr = (const uint8_t *)data;
 
         CHECK(size >= 7);
+<<<<<<< HEAD
+=======
+        //CHECK_EQ((unsigned)ptr[0], 1u);  // configurationVersion == 1
+>>>>>>> 1d8fcf2... libstagefright: Extended media support via FFMPEG
         uint8_t profile = ptr[1] & 31;
         uint8_t level = ptr[12];
         ptr += 22;
