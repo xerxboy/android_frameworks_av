@@ -810,7 +810,12 @@ MatroskaExtractor::MatroskaExtractor(const sp<DataSource> &source)
          info->GetWritingAppAsUTF8());
 #endif
 
-    addTracks();
+    ret = addTracks();
+    if (ret < 0) {
+        delete mSegment;
+        mSegment = NULL;
+        return;
+    }
 }
 
 MatroskaExtractor::~MatroskaExtractor() {
@@ -1005,7 +1010,7 @@ status_t addVorbisCodecInfo(
     return OK;
 }
 
-void MatroskaExtractor::addTracks() {
+int MatroskaExtractor::addTracks() {
     const mkvparser::Tracks *tracks = mSegment->GetTracks();
 
     for (size_t index = 0; index < tracks->GetTracksCount(); ++index) {
@@ -1120,7 +1125,9 @@ void MatroskaExtractor::addTracks() {
 
                 if (!strcmp("A_AAC", codecID)) {
                     meta->setCString(kKeyMIMEType, MEDIA_MIMETYPE_AUDIO_AAC);
-                    CHECK(codecPrivateSize >= 2);
+                    if (codecPrivateSize < 2) {
+                        return -1;
+                    }
 
                     addESDSFromCodecPrivate(
                             meta, true, codecPrivate, codecPrivateSize);
@@ -1176,6 +1183,7 @@ void MatroskaExtractor::addTracks() {
         trackInfo->mMeta = meta;
         trackInfo->mExtractor = this;
     }
+    return 0;
 }
 
 void MatroskaExtractor::findThumbnails() {
