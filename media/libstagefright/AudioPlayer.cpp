@@ -839,7 +839,15 @@ bool AudioPlayer::getMediaTimeMapping(
     Mutex::Autolock autoLock(mLock);
 
     if (useOffload()) {
-        mPositionTimeRealUs = getOutputPlayPositionUs_l();
+        int64_t playPosition = 0;
+        if (mSeeking) {
+            playPosition = mSeekTimeUs;
+        } else {
+            playPosition = getOutputPlayPositionUs_l();
+        }
+        if(!mReachedEOS)
+            mPositionTimeRealUs = playPosition;
+        mPositionTimeMediaUs = mPositionTimeRealUs;
         *realtime_us = mPositionTimeRealUs;
         *mediatime_us = mPositionTimeRealUs;
     } else {
