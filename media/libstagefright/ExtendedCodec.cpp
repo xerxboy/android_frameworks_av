@@ -418,6 +418,8 @@ status_t ExtendedCodec::setSupportedRole(
           "audio_decoder.ac3", NULL },
         { MEDIA_MIMETYPE_AUDIO_WMA,
           "audio_decoder.wma" , NULL },
+        { MEDIA_MIMETYPE_VIDEO_MPEG2,
+          "video_decoder.mpeg2" , NULL },
         };
 
     static const size_t kNumMimeToRole =
