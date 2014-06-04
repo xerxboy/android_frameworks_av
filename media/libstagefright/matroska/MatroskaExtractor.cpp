@@ -1,7 +1,4 @@
 /*
- * Copyright (c) 2013, The Linux Foundation. All rights reserved.
- * Not a Contribution.
- *
  * Copyright (C) 2010 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,9 +32,6 @@
 #include <media/stagefright/MetaData.h>
 #include <media/stagefright/Utils.h>
 #include <utils/String8.h>
-#include <media/stagefright/foundation/ABitReader.h>
-
-#include <cutils/properties.h>
 
 namespace android {
 
@@ -469,9 +463,8 @@ status_t MatroskaSource::readBlock() {
     const mkvparser::Block *block = mBlockIter.block();
 
     int64_t timeUs = mBlockIter.blockTimeUs();
-    int frameCount = block->GetFrameCount();
 
-    for (int i = 0; i < frameCount; ++i) {
+    for (int i = 0; i < block->GetFrameCount(); ++i) {
         const mkvparser::Block::Frame &frame = block->GetFrame(i);
 
         MediaBuffer *mbuf = new MediaBuffer(frame.len);
@@ -490,27 +483,6 @@ status_t MatroskaSource::readBlock() {
     }
 
     mBlockIter.advance();
-
-    if (!mBlockIter.eos() && frameCount > 1) {
-        // For files with lacing enabled, we need to amend they kKeyTime of
-        // each frame so that their kKeyTime are advanced accordingly (instead
-        // of being set to the same value). To do this, we need to find out
-        // the duration of the block using the start time of the next block.
-        int64_t duration = mBlockIter.blockTimeUs() - timeUs;
-        int64_t durationPerFrame = duration / frameCount;
-        int64_t durationRemainder = duration % frameCount;
-
-        // We split duration to each of the frame, distributing the remainder (if any)
-        // to the later frames. The later frames are processed first due to the
-        // use of the iterator for the doubly linked list
-        List<MediaBuffer *>::iterator it = mPendingFrames.end();
-        for (int i = frameCount - 1; i >= 0; --i) {
-            --it;
-            int64_t frameRemainder = durationRemainder >= frameCount - i ? 1 : 0;
-            int64_t frameTimeUs = timeUs + durationPerFrame * i + frameRemainder;
-            (*it)->meta_data()->setInt64(kKeyTime, frameTimeUs);
-        }
-    }
 
     return OK;
 }
@@ -685,27 +657,6 @@ MatroskaExtractor::MatroskaExtractor(const sp<DataSource> &source)
     ret = mSegment->ParseHeaders();
     CHECK_EQ(ret, 0);
 
-    const mkvparser::SegmentInfo *info = mSegment->GetInfo();
-
-    const char* muxingAppInfo = info->GetMuxingAppAsUTF8();
-    const char* writingApp    = info->GetWritingAppAsUTF8();
-
-    char property_value[PROPERTY_VALUE_MAX] = {0};
-    int parser_flags = 0;
-    property_get("mm.enable.qcom_parser", property_value, "0");
-    parser_flags = atoi(property_value);
-
-    //if divx parsing is disabled and clip has divx hint, bailout
-    //flag 0x00100000 is for DivX and 0x00200000 is for DivxHD
-    if(!(0x00300000 & parser_flags) &&
-       ((!strncasecmp(muxingAppInfo, "libDivX", 7)) ||
-       (!strncasecmp(writingApp, "DivX", 4)))) {
-        ALOGW("format found is not supported -- Bailing out --");
-        delete mSegment;
-        mSegment = NULL;
-        return;
-    }
-
     long len;
     ret = mSegment->LoadCluster(pos, len);
     CHECK_EQ(ret, 0);
@@ -765,56 +716,61 @@ bool MatroskaExtractor::isLiveStreaming() const {
     return mIsLiveStreaming;
 }
 
+static int bytesForSize(size_t size) {
+    // use at most 28 bits (4 times 7)
+    CHECK(size <= 0xfffffff);
+
+    if (size > 0x1fffff) {
+        return 4;
+    } else if (size > 0x3fff) {
+        return 3;
+    } else if (size > 0x7f) {
+        return 2;
+    }
+    return 1;
+}
+
+static void storeSize(uint8_t *data, size_t &idx, size_t size) {
+    int numBytes = bytesForSize(size);
+    idx += numBytes;
+
+    data += idx;
+    size_t next = 0;
+    while (numBytes--) {
+        *--data = (size & 0x7f) | next;
+        size >>= 7;
+        next = 0x80;
+    }
+}
+
 static void addESDSFromCodecPrivate(
         const sp<MetaData> &meta,
         bool isAudio, const void *priv, size_t privSize) {
-    static const uint8_t kStaticESDS[] = {
-        0x03, 22,
-        0x00, 0x00,     // ES_ID
-        0x00,           // streamDependenceFlag, URL_Flag, OCRstreamFlag
 
-        0x04, 17,
-        0x40,           // ObjectTypeIndication
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-
-        0x05,
-        // CodecSpecificInfo (with size prefix) follows
-    };
-
-    // Make sure all sizes can be coded in a single byte.
-    CHECK(privSize + 22 - 2 < 128);
-
-    if(isAudio) {
-        ABitReader br((const uint8_t *)priv, privSize);
-        uint32_t objectType = br.getBits(5);
-
-        if (objectType == 31) {  // AAC-ELD => additional 6 bits
-            objectType = 32 + br.getBits(6);
-        }
-
-        if(objectType == 1) { //AAC Main profile
-            ALOGD("\n  Found AAC mainprofile in Matroska Extractor \n");
-        }
-
-        meta->setInt32(kKeyAACProfile, objectType);
-    }
-    size_t esdsSize = sizeof(kStaticESDS) + privSize + 1;
+    int privSizeBytesRequired = bytesForSize(privSize);
+    int esdsSize2 = 14 + privSizeBytesRequired + privSize;
+    int esdsSize2BytesRequired = bytesForSize(esdsSize2);
+    int esdsSize1 = 4 + esdsSize2BytesRequired + esdsSize2;
+    int esdsSize1BytesRequired = bytesForSize(esdsSize1);
+    size_t esdsSize = 1 + esdsSize1BytesRequired + esdsSize1;
     uint8_t *esds = new uint8_t[esdsSize];
-    memcpy(esds, kStaticESDS, sizeof(kStaticESDS));
-    uint8_t *ptr = esds + sizeof(kStaticESDS);
-    *ptr++ = privSize;
-    memcpy(ptr, priv, privSize);
 
-    // Increment by codecPrivateSize less 2 bytes that are accounted for
-    // already in lengths of 22/17
-    esds[1] += privSize - 2;
-    esds[6] += privSize - 2;
-
-    // Set ObjectTypeIndication.
-    esds[7] = isAudio ? 0x40   // Audio ISO/IEC 14496-3
-                      : 0x20;  // Visual ISO/IEC 14496-2
+    size_t idx = 0;
+    esds[idx++] = 0x03;
+    storeSize(esds, idx, esdsSize1);
+    esds[idx++] = 0x00; // ES_ID
+    esds[idx++] = 0x00; // ES_ID
+    esds[idx++] = 0x00; // streamDependenceFlag, URL_Flag, OCRstreamFlag
+    esds[idx++] = 0x04;
+    storeSize(esds, idx, esdsSize2);
+    esds[idx++] = isAudio ? 0x40   // Audio ISO/IEC 14496-3
+                          : 0x20;  // Visual ISO/IEC 14496-2
+    for (int i = 0; i < 12; i++) {
+        esds[idx++] = 0x00;
+    }
+    esds[idx++] = 0x05;
+    storeSize(esds, idx, privSize);
+    memcpy(esds + idx, priv, privSize);
 
     meta->setData(kKeyESDS, 0, esds, esdsSize);
 
