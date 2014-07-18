@@ -240,7 +240,6 @@ public:
     /* Terminates the AudioTrack and unregisters it from AudioFlinger.
      * Also destroys all resources associated with the AudioTrack.
      */
-
                         virtual ~AudioTrack();
 
     /* Initialize an AudioTrack that was created using the AudioTrack() constructor.
@@ -624,7 +623,6 @@ public:
      * consider implementing that at application level, based on the low resolution timestamps.
      * Returns NO_ERROR if timestamp is valid.
      */
-
       virtual status_t    getTimestamp(AudioTimestamp& timestamp);
 #ifdef QCOM_DIRECTTRACK
       virtual void notify(int msg);
@@ -778,6 +776,7 @@ protected:
     int                     mAuxEffectId;
 
     mutable Mutex           mLock;
+
 #ifdef QCOM_DIRECTTRACK
     void*                   mObserver;
 #endif

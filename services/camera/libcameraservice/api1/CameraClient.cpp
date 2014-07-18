@@ -89,7 +89,7 @@ status_t CameraClient::initialize(camera_module_t *module) {
 
     // Enable zoom, error, focus, and metadata messages by default
     enableMsgType(CAMERA_MSG_ERROR | CAMERA_MSG_ZOOM | CAMERA_MSG_FOCUS
-#ifndef QCOM_HARDWARE
+#ifndef CAMERA_MSG_MGMT
                   | CAMERA_MSG_PREVIEW_METADATA 
 #endif
 #ifndef OMAP_ICS_CAMERA
@@ -120,14 +120,17 @@ CameraClient::~CameraClient() {
 status_t CameraClient::dump(int fd, const Vector<String16>& args) {
     const size_t SIZE = 256;
     char buffer[SIZE];
-
+    status_t rc = INVALID_OPERATION;
     size_t len = snprintf(buffer, SIZE, "Client[%d] (%p) PID: %d\n",
             mCameraId,
             getRemoteCallback()->asBinder().get(),
             mClientPid);
     len = (len > SIZE - 1) ? SIZE - 1 : len;
     write(fd, buffer, len);
-    return mHardware->dump(fd, args);
+    if (mHardware != NULL) {
+        rc =  mHardware->dump(fd, args);
+    }
+    return rc;
 }
 
 // ----------------------------------------------------------------------------
@@ -256,14 +259,9 @@ void CameraClient::disconnect() {
 
     // Release the held ANativeWindow resources.
     if (mPreviewWindow != 0) {
-#ifdef QCOM_HARDWARE
-#ifndef NO_UPDATE_PREVIEW
-        mHardware->setPreviewWindow(0);
-#endif
-#endif
         disconnectWindow(mPreviewWindow);
         mPreviewWindow = 0;
-#ifndef QCOM_HARDWARE
+#ifndef NO_UPDATE_PREVIEW
         mHardware->setPreviewWindow(mPreviewWindow);
 #endif
     }
@@ -304,12 +302,6 @@ status_t CameraClient::setPreviewWindow(const sp<IBinder>& binder,
             native_window_set_buffers_transform(window.get(), mOrientation);
             result = mHardware->setPreviewWindow(window);
         }
-#ifdef QCOM_HARDWARE
-#ifndef NO_UPDATE_PREVIEW
-    } else {
-        result = mHardware->setPreviewWindow(window);
-#endif
-#endif
     }
 
     if (result == NO_ERROR) {
@@ -369,10 +361,10 @@ status_t CameraClient::setPreviewCallbackTarget(
 
 // start preview mode
 status_t CameraClient::startPreview() {
-    LOG1("startPreview (pid %d)", getCallingPid());
-#ifdef QCOM_HARDWARE
+#ifdef CAMERA_MSG_MGMT
     enableMsgType(CAMERA_MSG_PREVIEW_METADATA);
 #endif
+    LOG1("startPreview (pid %d)", getCallingPid());
     return startCameraMode(CAMERA_PREVIEW_MODE);
 }
 
@@ -463,7 +455,7 @@ status_t CameraClient::startRecordingMode() {
 // stop preview mode
 void CameraClient::stopPreview() {
     LOG1("stopPreview (pid %d)", getCallingPid());
-#ifdef QCOM_HARDWARE
+#ifdef CAMERA_MSG_MGMT
     disableMsgType(CAMERA_MSG_PREVIEW_METADATA);
 #endif
     Mutex::Autolock lock(mLock);
@@ -481,7 +473,7 @@ void CameraClient::stopPreview() {
 #endif
 
     disableMsgType(CAMERA_MSG_PREVIEW_FRAME);
-#ifdef QCOM_HARDWARE
+#ifdef CAMERA_MSG_MGMT
     //Disable picture related message types
     ALOGI("stopPreview: Disable picture related messages");
     int picMsgType = 0;
@@ -504,7 +496,7 @@ void CameraClient::stopRecording() {
     if (checkPidAndHardware() != NO_ERROR) return;
 
     disableMsgType(CAMERA_MSG_VIDEO_FRAME);
-#ifdef QCOM_HARDWARE
+#ifdef CAMERA_MSG_MGMT
     //Disable picture related message types
     ALOGI("stopRecording: Disable picture related messages");
     int picMsgType = 0;
@@ -604,8 +596,7 @@ status_t CameraClient::takePicture(int msgType) {
 #if defined(OMAP_ICS_CAMERA) || defined(OMAP_ENHANCEMENT_BURST_CAPTURE)
     picMsgType |= CAMERA_MSG_COMPRESSED_BURST_IMAGE;
 #endif
-
-#ifdef QCOM_HARDWARE
+#ifdef CAMERA_MSG_MGMT
     disableMsgType(CAMERA_MSG_PREVIEW_METADATA);
 #endif
     enableMsgType(picMsgType);
@@ -613,7 +604,17 @@ status_t CameraClient::takePicture(int msgType) {
     mBurstCnt = mHardware->getParameters().getInt("num-snaps-per-shutter");
     if(mBurstCnt <= 0)
         mBurstCnt = 1;
+
     LOG1("mBurstCnt = %d", mBurstCnt);
+
+    // HTC HDR mode requires that we snap multiple times, but only get one jpeg
+    int numJpegs = mHardware->getParameters().getInt("num-jpegs-per-shutter");
+    if (numJpegs == 1 && mBurstCnt > 1) {
+        while (mBurstCnt > 1) {
+            result = mHardware->takePicture();
+            mBurstCnt--;
+        }
+    }
 #endif
 
     return mHardware->takePicture();
@@ -713,6 +714,16 @@ status_t CameraClient::sendCommand(int32_t cmd, int32_t arg1, int32_t arg2) {
         enableMsgType(CAMERA_MSG_STATS_DATA);
     } else if (cmd == CAMERA_CMD_HISTOGRAM_OFF) {
         disableMsgType(CAMERA_MSG_STATS_DATA);
+    } else if (cmd == CAMERA_CMD_METADATA_ON) {
+        enableMsgType(CAMERA_MSG_META_DATA);
+    } else if (cmd == CAMERA_CMD_METADATA_OFF) {
+        disableMsgType(CAMERA_MSG_META_DATA);
+    } else if ( cmd == CAMERA_CMD_LONGSHOT_ON ) {
+        mLongshotEnabled = true;
+    } else if ( cmd == CAMERA_CMD_LONGSHOT_OFF ) {
+        mLongshotEnabled = false;
+        disableMsgType(CAMERA_MSG_SHUTTER);
+        disableMsgType(CAMERA_MSG_COMPRESSED_IMAGE);
 #endif
     }
 
@@ -735,7 +746,7 @@ void CameraClient::disableMsgType(int32_t msgType) {
 bool CameraClient::lockIfMessageWanted(int32_t msgType) {
     int sleepCount = 0;
     while (mMsgEnabled & msgType) {
-#ifdef QCOM_HARDWARE
+#ifdef CAMERA_MSG_MGMT
         if ((msgType == CAMERA_MSG_PREVIEW_FRAME) &&
               (mMsgEnabled & CAMERA_MSG_COMPRESSED_IMAGE)) {
            LOG1("lockIfMessageWanted(%d): Don't try to acquire mlock if "
@@ -891,7 +902,9 @@ void CameraClient::handleShutter(void) {
         c->notifyCallback(CAMERA_MSG_SHUTTER, 0, 0);
         if (!lockIfMessageWanted(CAMERA_MSG_SHUTTER)) return;
     }
-    disableMsgType(CAMERA_MSG_SHUTTER);
+    if ( !mLongshotEnabled ) {
+        disableMsgType(CAMERA_MSG_SHUTTER);
+    }
 
     mLock.unlock();
 }
@@ -974,12 +987,12 @@ void CameraClient::handleCompressedPicture(const sp<IMemory>& mem) {
     if (mBurstCnt)
         mBurstCnt--;
 
-    if (!mBurstCnt) {
-        LOG1("handleCompressedPicture mBurstCnt = %d", mBurstCnt);
+    LOG1("handleCompressedPicture mBurstCnt = %d", mBurstCnt);
+    if (!mBurstCnt && !mLongshotEnabled) {
+#endif
         disableMsgType(CAMERA_MSG_COMPRESSED_IMAGE);
+#ifdef QCOM_HARDWARE
     }
-#else
-    disableMsgType(CAMERA_MSG_COMPRESSED_IMAGE);
 #endif
 
     sp<ICameraClient> c = mRemoteCallback;

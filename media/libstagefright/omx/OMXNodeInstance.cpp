@@ -54,17 +54,11 @@ struct BufferMeta {
         if (!mIsBackup) {
             return;
         }
-#ifdef TF101_OMX
+
         size_t bytesToCopy = header->nFlags & OMX_BUFFERFLAG_EXTRADATA ?
             header->nAllocLen - header->nOffset : header->nFilledLen;
-#endif
         memcpy((OMX_U8 *)mMem->pointer() + header->nOffset,
-#ifdef TF101_OMX
                header->pBuffer + header->nOffset, bytesToCopy);
-#else
-               header->pBuffer + header->nOffset,
-               header->nFilledLen);
-#endif
     }
 
     void CopyToOMX(const OMX_BUFFERHEADERTYPE *header) {
@@ -72,17 +66,10 @@ struct BufferMeta {
             return;
         }
 
-#ifdef TF101_OMX
         size_t bytesToCopy = header->nFlags & OMX_BUFFERFLAG_EXTRADATA ?
             header->nAllocLen - header->nOffset : header->nFilledLen;
-#endif
         memcpy(header->pBuffer + header->nOffset,
-#ifdef TF101_OMX
                (const OMX_U8 *)mMem->pointer() + header->nOffset, bytesToCopy);
-#else
-               (const OMX_U8 *)mMem->pointer() + header->nOffset,
-               header->nFilledLen);
-#endif
     }
 
     void setGraphicBuffer(const sp<GraphicBuffer> &graphicBuffer) {
@@ -174,6 +161,7 @@ status_t OMXNodeInstance::freeNode(OMXMaster *master) {
     OMX_STATETYPE state;
     CHECK_EQ(OMX_GetState(mHandle, &state), OMX_ErrorNone);
     switch (state) {
+        case OMX_StatePause:
         case OMX_StateExecuting:
         {
             ALOGV("forcing Executing->Idle");
@@ -779,16 +767,11 @@ status_t OMXNodeInstance::freeBuffer(
         OMX_U32 portIndex, OMX::buffer_id buffer) {
     Mutex::Autolock autoLock(mLock);
 
-#ifndef QCOM_HARDWARE
-    removeActiveBuffer(portIndex, buffer);
-#endif
-
     OMX_BUFFERHEADERTYPE *header = (OMX_BUFFERHEADERTYPE *)buffer;
     BufferMeta *buffer_meta = static_cast<BufferMeta *>(header->pAppPrivate);
 
     OMX_ERRORTYPE err = OMX_FreeBuffer(mHandle, portIndex, header);
 
-#ifdef QCOM_HARDWARE
     if (err != OMX_ErrorNone) {
         ALOGW("OMX_FreeBuffer failed w/ err %x, do not remove from active buffer list", err);
     } else {
@@ -798,10 +781,6 @@ status_t OMXNodeInstance::freeBuffer(
         delete buffer_meta;
         buffer_meta = NULL;
     }
-#else
-    delete buffer_meta;
-    buffer_meta = NULL;
-#endif
 
     return StatusFromOMXError(err);
 }

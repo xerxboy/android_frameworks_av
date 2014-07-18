@@ -35,7 +35,11 @@
 #include <camera/ICameraServiceListener.h>
 
 /* This needs to be increased if we can have more cameras */
+#ifdef OMAP_ENHANCEMENT
+#define MAX_CAMERAS 3
+#else
 #define MAX_CAMERAS 2
+#endif
 
 namespace android {
 
@@ -109,7 +113,6 @@ public:
     enum sound_kind {
         SOUND_SHUTTER = 0,
         SOUND_RECORDING = 1,
-        SOUND_RECORDING_STOP = 2,
         NUM_SOUNDS
     };
 
@@ -264,11 +267,11 @@ public:
 
         virtual void         notifyError();
 
-        // Initialized in constructor
 
         // - The app-side Binder interface to receive callbacks from us
         sp<ICameraClient>               mRemoteCallback;
 
+        bool                 mLongshotEnabled;
     }; // class Client
 
     class ProClient : public BnProCameraUser, public BasicClient {

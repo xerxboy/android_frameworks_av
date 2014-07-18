@@ -122,6 +122,7 @@ public:
     void setPictureSize(int width, int height);
     void getPictureSize(int *width, int *height) const;
     void getSupportedPictureSizes(Vector<Size> &sizes) const;
+    void set3DFileFormat(const char* buffer);
     void setPictureFormat(const char *format);
     const char *getPictureFormat() const;
 #ifdef QCOM_HARDWARE
@@ -208,6 +209,8 @@ public:
     // Supported dimensions for captured pictures in pixels.
     // Example value: "2048x1536,1024x768". Read only.
     static const char KEY_SUPPORTED_PICTURE_SIZES[];
+    //HTC 3D color format
+    static const char KEY_SUPPORTED_3D_FILE_FORMAT[];
     // The image format for captured pictures. See CAMERA_MSG_COMPRESSED_IMAGE
     // in frameworks/base/include/camera/Camera.h.
     // Example value: "jpeg" or PIXEL_FORMAT_XXX constants. Read/write.
@@ -592,10 +595,10 @@ public:
     static const char KEY_FULL_VIDEO_SNAP_SUPPORTED[];
 
 #ifdef QCOM_HARDWARE
-    static const char KEY_POWER_MODE[];
-    static const char KEY_POWER_MODE_SUPPORTED[];
+#ifndef HAVE_ISO
     static const char KEY_ISO_MODE[];
     static const char KEY_SUPPORTED_ISO_MODES[];
+#endif
     static const char KEY_LENSSHADE[] ;
     static const char KEY_SUPPORTED_LENSSHADE_MODES[] ;
 
@@ -626,9 +629,15 @@ public:
 #ifdef QCOM_HARDWARE
     static const char KEY_MEMORY_COLOR_ENHANCEMENT[];
     static const char KEY_SUPPORTED_MEM_COLOR_ENHANCE_MODES[];
+
+    static const char KEY_POWER_MODE_SUPPORTED[];
+    static const char KEY_POWER_MODE[];
+
     static const char KEY_ZSL[];
     static const char KEY_SUPPORTED_ZSL_MODES[];
+
     static const char KEY_CAMERA_MODE[];
+
     static const char KEY_VIDEO_HIGH_FRAME_RATE[];
     static const char KEY_SUPPORTED_VIDEO_HIGH_FRAME_RATE_MODES[];
     static const char KEY_HIGH_DYNAMIC_RANGE_IMAGING[];
@@ -732,6 +741,26 @@ public:
 
     // Value for KEY_FOCUS_DISTANCES.
     static const char FOCUS_DISTANCE_INFINITY[];
+
+#ifdef SONY_CAM_PARAMS
+    static const char KEY_SONY_ISO[];
+    static const char KEY_SONY_METERING_MODE[];
+    static const char KEY_SONY_VS[];
+    static const char KEY_SONY_MAX_BURST_SHOT_SIZE[];
+    static const char KEY_SONY_BURST_SHOT_VALUES[];
+    static const char KEY_SONY_VS_VALUES[];
+    static const char KEY_SONY_METERING_MODE_VALUES[];
+    static const char KEY_SONY_AE_MODE[];
+    static const char KEY_SONY_AE_MODE_VALUES[];
+    static const char KEY_SONY_ISO_VALUES[];
+    static const char KEY_SONY_IS[];
+    static const char KEY_SONY_IS_VALUES[];
+    static const char KEY_SONY_EXTENSION_VERSION[];
+    static const char KEY_SONY_FOCUS_AREA[];
+    static const char KEY_SONY_FOCUS_AREA_VALUES[];
+    static const char KEY_SONY_MAX_MULTI_FOCUS_NUM[];
+    static const char KEY_SONY_SCENE_DETECT_SUPPORTED[];
+#endif
 
 #ifdef QCOM_HARDWARE
     // DENOISE
@@ -921,8 +950,6 @@ public:
     // other modes.
     static const char FOCUS_MODE_CONTINUOUS_PICTURE[];
 
-
-
     // Values for light special effects
     // Low-light enhancement mode
     static const char LIGHTFX_LOWLIGHT[];
@@ -951,7 +978,6 @@ public:
     static const char FOCUS_MODE_MANUAL_POSITION[];
     static const char WHITE_BALANCE_MANUAL_CCT[];
 #endif
-
     // Normal focus mode. Applications should call
     // CameraHardwareInterface.autoFocus to start the focus in this mode.
     static const char FOCUS_MODE_NORMAL[];
@@ -1013,6 +1039,10 @@ public:
     static const char FACE_DETECTION_OFF[];
     static const char FACE_DETECTION_ON[];
 
+    // Values for HTC 3D image settings.
+    static const char FILE_FORMAT_MPO[];
+    static const char FILE_FORMAT_JPS[];
+
     // Values for MCE settings.
     static const char MCE_ENABLE[];
     static const char MCE_DISABLE[];
@@ -1042,6 +1072,28 @@ public:
     // Values for HDR settings.
     static const char HDR_ENABLE[];
     static const char HDR_DISABLE[];
+
+#if defined(QCOM_HARDWARE) && defined(SAMSUNG_CAMERA_LEGACY)
+    static const char FOCUS_MODE_FACEDETECT[];
+    static const char FOCUS_MODE_TOUCHAF[];
+    static const char ISO_50[];
+    static const char KEY_ANTI_SHAKE_MODE[];
+    static const char KEY_AUTO_CONTRAST[];
+    static const char KEY_BEAUTY_MODE[];
+    static const char KEY_BLUR_MODE[];
+    static const char KEY_VINTAGE_MODE[];
+    static const char KEY_WDR_MODE[];
+    static const char VINTAGE_MODE_BNW[];
+    static const char VINTAGE_MODE_COOL[];
+    static const char VINTAGE_MODE_NORMAL[];
+    static const char VINTAGE_MODE_OFF[];
+    static const char VINTAGE_MODE_WARM[];
+    static const char SCENE_MODE_DAWN[];
+    static const char SCENE_MODE_DUSKDAWN[];
+    static const char SCENE_MODE_FALL[];
+    static const char SCENE_MODE_FALL_COLOR[];
+    static const char SCENE_MODE_TEXT[];
+#endif
 
    // Values for Redeye Reduction settings.
    // static const char REDEYE_REDUCTION_ENABLE[];
