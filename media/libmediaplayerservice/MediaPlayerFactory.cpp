@@ -171,11 +171,11 @@ sp<MediaPlayerBase> MediaPlayerFactory::createPlayer(
 class StagefrightPlayerFactory :
     public MediaPlayerFactory::IFactory {
   public:
-    virtual float scoreFactory(const sp<IMediaPlayer>& client,
+    virtual float scoreFactory(const sp<IMediaPlayer>& /*client*/,
                                int fd,
                                int64_t offset,
-                               int64_t length,
-                               float curScore) {
+                               int64_t /*length*/,
+                               float /*curScore*/) {
         char buf[20];
         lseek(fd, offset, SEEK_SET);
         read(fd, buf, sizeof(buf));
@@ -198,7 +198,7 @@ class StagefrightPlayerFactory :
 
 class NuPlayerFactory : public MediaPlayerFactory::IFactory {
   public:
-    virtual float scoreFactory(const sp<IMediaPlayer>& client,
+    virtual float scoreFactory(const sp<IMediaPlayer>& /*client*/,
                                const char* url,
                                float curScore) {
         static const float kOurScore = 0.8;
@@ -230,9 +230,9 @@ class NuPlayerFactory : public MediaPlayerFactory::IFactory {
         return 0.0;
     }
 
-    virtual float scoreFactory(const sp<IMediaPlayer>& client,
-                               const sp<IStreamSource> &source,
-                               float curScore) {
+    virtual float scoreFactory(const sp<IMediaPlayer>& /*client*/,
+                               const sp<IStreamSource>& /*source*/,
+                               float /*curScore*/) {
         return 1.0;
     }
 
@@ -244,7 +244,7 @@ class NuPlayerFactory : public MediaPlayerFactory::IFactory {
 
 class SonivoxPlayerFactory : public MediaPlayerFactory::IFactory {
   public:
-    virtual float scoreFactory(const sp<IMediaPlayer>& client,
+    virtual float scoreFactory(const sp<IMediaPlayer>& /*client*/,
                                const char* url,
                                float curScore) {
         static const float kOurScore = 0.4;
@@ -275,7 +275,7 @@ class SonivoxPlayerFactory : public MediaPlayerFactory::IFactory {
         return 0.0;
     }
 
-    virtual float scoreFactory(const sp<IMediaPlayer>& client,
+    virtual float scoreFactory(const sp<IMediaPlayer>& /*client*/,
                                int fd,
                                int64_t offset,
                                int64_t length,
@@ -313,9 +313,9 @@ class SonivoxPlayerFactory : public MediaPlayerFactory::IFactory {
 
 class TestPlayerFactory : public MediaPlayerFactory::IFactory {
   public:
-    virtual float scoreFactory(const sp<IMediaPlayer>& client,
+    virtual float scoreFactory(const sp<IMediaPlayer>& /*client*/,
                                const char* url,
-                               float curScore) {
+                               float /*curScore*/) {
         if (TestPlayerStub::canBeUsed(url)) {
             return 1.0;
         }
