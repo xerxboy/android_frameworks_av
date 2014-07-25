@@ -1164,6 +1164,11 @@ status_t AwesomePlayer::fallbackToSWDecoder() {
     mAudioSource.clear();
     modifyFlags((AUDIO_RUNNING | AUDIOPLAYER_STARTED), CLEAR);
     mOffloadAudio = false;
+#ifdef ENABLE_AV_ENHANCEMENTS
+    // no 24-bit for fallback
+    ExtendedUtils::updateOutputBitWidth(mAudioSource->getFormat(), false);
+#endif
+
     mAudioSource = mOmxSource;
     if (mAudioSource != NULL) {
         if ((err = mAudioSource->start()) == OK) {
