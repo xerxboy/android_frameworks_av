@@ -1175,6 +1175,7 @@ void AudioMixer::process__genericNoResampling(state_t* state, int64_t pts)
                    if (t.in == NULL) {
                         enabledTracks &= ~(1<<i);
                         e1 &= ~(1<<i);
+                                               memset(t.mainBuffer, 0, sizeof(int16_t) * MAX_NUM_CHANNELS * state->frameCount);
                         break;
                     }
                     size_t inFrames = (t.frameCount > outFrames)?outFrames:t.frameCount;
