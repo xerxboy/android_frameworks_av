@@ -3779,7 +3779,7 @@ bool ACodec::UninitializedState::onAllocateComponent(const sp<AMessage> &msg) {
         ExtendedCodec::overrideComponentName(quirks, msg, &componentName);
 #endif
 
-        pid_t tid = androidGetTid();
+        pid_t tid = gettid();
         int prevPriority = androidGetThreadPriority(tid);
         androidSetThreadPriority(tid, ANDROID_PRIORITY_FOREGROUND);
         status_t err = omx->allocateNode(componentName.c_str(), observer, &node);
