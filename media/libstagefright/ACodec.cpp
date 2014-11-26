@@ -5157,6 +5157,7 @@ bool ACodec::UninitializedState::onAllocateComponent(const sp<AMessage> &msg) {
             encoder = false;
         }
 
+        ALOGV("onAllocateComponent %s %d", mime.c_str(), encoder);
 #ifdef ENABLE_AV_ENHANCEMENTS
     // Call UseQCHWAACEncoder with no arguments to get the correct state since
     // MediaCodecSource does not pass the output format details when calling
@@ -5171,9 +5172,10 @@ bool ACodec::UninitializedState::onAllocateComponent(const sp<AMessage> &msg) {
                 "OMX.qcom.audio.encoder.aac",  // OMX.qcom.audio.encoder.aac
                 0,     // flags
                 &matchingCodecs);
-    }
+    } else
+#endif
 #ifdef QTI_FLAC_DECODER
-    else if (!strcasecmp(mime.c_str(), MEDIA_MIMETYPE_AUDIO_FLAC) && !encoder) {
+    if (!strcasecmp(mime.c_str(), MEDIA_MIMETYPE_AUDIO_FLAC) && !encoder) {
         //use google's raw decoder
         OMXCodec::findMatchingCodecs(
                 MEDIA_MIMETYPE_AUDIO_RAW,
@@ -5181,22 +5183,14 @@ bool ACodec::UninitializedState::onAllocateComponent(const sp<AMessage> &msg) {
                 "OMX.google.raw.decoder",
                 0, //flags
                 &matchingCodecs);
+    } else
 #endif
-     else
         OMXCodec::findMatchingCodecs(
                 mime.c_str(),
                 encoder, // createEncoder
                 NULL,  // matchComponentName
                 0,     // flags
                 &matchingCodecs);
-#else
-    OMXCodec::findMatchingCodecs(
-                mime.c_str(),
-                encoder, // createEncoder
-                NULL,  // matchComponentName
-                0,     // flags
-                &matchingCodecs);
-#endif
     }
 
     sp<CodecObserver> observer = new CodecObserver;
@@ -5206,7 +5200,8 @@ bool ACodec::UninitializedState::onAllocateComponent(const sp<AMessage> &msg) {
             ++matchIndex) {
         componentName = matchingCodecs.itemAt(matchIndex).mName.string();
         quirks = matchingCodecs.itemAt(matchIndex).mQuirks;
-        ExtendedCodec::overrideComponentName(quirks, msg, &componentName, &mime, encoder);
+        // this doesn't work here as the format isn't passed in the message
+        //ExtendedCodec::overrideComponentName(quirks, msg, &componentName, &mime, encoder);
 
         pid_t tid = androidGetTid();
         int prevPriority = androidGetThreadPriority(tid);
