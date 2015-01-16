@@ -2266,10 +2266,14 @@ status_t MPEG4Writer::Track::threadEntry() {
 
         if (mOwner->exceedsFileSizeLimit()) {
             mOwner->notify(MEDIA_RECORDER_EVENT_INFO, MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED, 0);
+            copy->release();
+            copy = NULL;
             break;
         }
         if (mOwner->exceedsFileDurationLimit()) {
             mOwner->notify(MEDIA_RECORDER_EVENT_INFO, MEDIA_RECORDER_INFO_MAX_DURATION_REACHED, 0);
+            copy->release();
+            copy = NULL;
             break;
         }
 
@@ -2386,6 +2390,8 @@ status_t MPEG4Writer::Track::threadEntry() {
             copy->release();
             err = UNKNOWN_ERROR;
             mSource->notifyError(err);
+            copy->release();
+            copy = NULL;
             return err;
         }
 
