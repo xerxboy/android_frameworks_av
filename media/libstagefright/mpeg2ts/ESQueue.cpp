@@ -47,7 +47,13 @@
 #include <media/stagefright/MediaDefs.h>
 #include <media/stagefright/MetaData.h>
 #include <media/stagefright/Utils.h>
+<<<<<<< HEAD
 #include <QCMetaData.h>
+=======
+#ifdef ENABLE_AV_ENHANCEMENTS
+#include <QCMetaData.h>
+#endif
+>>>>>>> e233453... mpeg2ts: Add support for parsing HEVC stream in MPEG2 TS container
 
 #include "include/avc_utils.h"
 #include "include/ExtendedUtils.h"
@@ -537,11 +543,19 @@ sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnit() {
                 mFormat = MakeAVCCodecSpecificData(accessUnit);
             } else if (mMode == H265) {
                 mFormat = ExtendedUtils::MakeHEVCCodecSpecificData(accessUnit);
+<<<<<<< HEAD
+=======
+#ifdef ENABLE_AV_ENHANCEMENTS
+>>>>>>> e233453... mpeg2ts: Add support for parsing HEVC stream in MPEG2 TS container
                 if (mFormat != NULL) {
                     // Unlike H264, we do not require HEVC data to be aligned.
                     // To handle this, let the decoder do the frame parsing.
                     mFormat->setInt32(kKeyUseArbitraryMode, 1);
                 }
+<<<<<<< HEAD
+=======
+#endif
+>>>>>>> e233453... mpeg2ts: Add support for parsing HEVC stream in MPEG2 TS container
             }
         }
 
