@@ -21,7 +21,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <camera/CameraParameters.h>
-#include "camera/CameraParametersExtra.h"
 #include <system/graphics.h>
 
 namespace android {
@@ -173,10 +172,6 @@ const char CameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE[] = "continuous-pictu
 // Values for light fx settings
 const char CameraParameters::LIGHTFX_LOWLIGHT[] = "low-light";
 const char CameraParameters::LIGHTFX_HDR[] = "high-dynamic-range";
-
-#ifdef CAMERA_PARAMETERS_EXTRA_C
-CAMERA_PARAMETERS_EXTRA_C
-#endif
 
 CameraParameters::CameraParameters()
                 : mMap()
@@ -492,6 +487,11 @@ status_t CameraParameters::dump(int fd, const Vector<String16>& /*args*/) const
 void CameraParameters::getSupportedPreviewFormats(Vector<int>& formats) const {
     const char* supportedPreviewFormats =
           get(CameraParameters::KEY_SUPPORTED_PREVIEW_FORMATS);
+
+    if (supportedPreviewFormats == NULL) {
+        ALOGW("%s: No supported preview formats.", __FUNCTION__);
+        return;
+    }
 
     String8 fmtStr(supportedPreviewFormats);
     char* prevFmts = fmtStr.lockBuffer(fmtStr.size());
