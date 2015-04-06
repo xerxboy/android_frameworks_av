@@ -1357,15 +1357,11 @@ status_t MediaPlayerService::decode(
     if (cache->wait() != NO_ERROR) goto Exit;
 
     ALOGV("start");
-<<<<<<< HEAD
-    if (player->start() != NO_ERROR) goto Exit;
-=======
     err = player->start();
     if (err != NO_ERROR) {
         ALOGE("Error: %d Starting player in decode", err);
         goto Exit;
     }
->>>>>>> b0714c2... Solved problem with hanging decode call
 
     ALOGV("wait for playback complete");
     cache->wait();
@@ -1421,15 +1417,11 @@ status_t MediaPlayerService::decode(int fd, int64_t offset, int64_t length,
     if (cache->wait() != NO_ERROR) goto Exit;
 
     ALOGV("start");
-<<<<<<< HEAD
-    if (player->start() != NO_ERROR) goto Exit;
-=======
     err = player->start();
     if (err != NO_ERROR) {
         ALOGE("Error: %d Starting player in decode", err);
         goto Exit;
     }
->>>>>>> b0714c2... Solved problem with hanging decode call
 
     ALOGV("wait for playback complete");
     cache->wait();

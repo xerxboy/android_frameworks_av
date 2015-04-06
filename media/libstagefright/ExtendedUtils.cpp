@@ -944,9 +944,8 @@ sp<MetaData> ExtendedUtils::updatePCMFormatAndBitwidth(
     sp<MetaData> tempMetadata = new MetaData;
     sp<MetaData> format = audioSource->getFormat();
     int bitWidth = 16;
-#if defined (PCM_OFFLOAD_ENABLED) || defined (PCM_OFFLOAD_ENABLED_24)
-    format->findInt32(kKeySampleBits, &bitWidth);
-    tempMetadata->setInt32(kKeySampleBits, bitWidth);
+    format->findInt32(kKeyBitsPerSample, &bitWidth);
+    tempMetadata->setInt32(kKeyBitsPerSample, bitWidth);
     tempMetadata->setInt32(kKeyPcmFormat, AUDIO_FORMAT_PCM_16_BIT);
     char prop_pcmoffload[PROPERTY_VALUE_MAX] = {0};
     property_get("audio.offload.pcm.24bit.enable", prop_pcmoffload, "0");
@@ -955,7 +954,6 @@ sp<MetaData> ExtendedUtils::updatePCMFormatAndBitwidth(
         (!strcmp(prop_pcmoffload, "true") || atoi(prop_pcmoffload))) {
         tempMetadata->setInt32(kKeyPcmFormat, AUDIO_FORMAT_PCM_8_24_BIT);
     }
-#endif
     return tempMetadata;
 }
 
@@ -1066,7 +1064,7 @@ bool ExtendedUtils::isRAWFormat(const sp<AMessage> &format) {
 int32_t ExtendedUtils::getPcmSampleBits(const sp<MetaData> &meta) {
     int32_t bitWidth = 16;
     if (meta != NULL) {
-        meta->findInt32(kKeySampleBits, &bitWidth);
+        meta->findInt32(kKeyBitsPerSample, &bitWidth);
     }
     return bitWidth;
 }
@@ -1907,7 +1905,7 @@ sp<MetaData> ExtendedUtils::createPCMMetaFromSource(
 
     //TODO: remove this hard coding and use the meta info, but the issue
     //is that decoder does not provide this info for now
-    tPCMMeta->setInt32(kKeySampleBits, 16);
+    tPCMMeta->setInt32(kKeyBitsPerSample, 16);
 
     if (sMeta == NULL) {
         ALOGW("no meta returning dummy meta");

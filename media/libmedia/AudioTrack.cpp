@@ -160,6 +160,12 @@ AudioTrack::AudioTrack(
 #endif
 
 {
+#ifdef QCOM_DIRECTTRACK
+    mAttributes.content_type = AUDIO_CONTENT_TYPE_UNKNOWN;
+    mAttributes.usage = AUDIO_USAGE_UNKNOWN;
+    mAttributes.flags = 0x0;
+    strcpy(mAttributes.tags, "");
+#endif
     mStatus = set(streamType, sampleRate, format, channelMask,
             frameCount, flags, cbf, user, notificationFrames,
             0 /*sharedBuffer*/, false /*threadCanCallJava*/, sessionId, transferType,
@@ -195,6 +201,12 @@ AudioTrack::AudioTrack(
       mPausedPosition(0)
 #endif
 {
+#ifdef QCOM_DIRECTTRACK
+    mAttributes.content_type = AUDIO_CONTENT_TYPE_UNKNOWN;
+    mAttributes.usage = AUDIO_USAGE_UNKNOWN;
+    mAttributes.flags = 0x0;
+    strcpy(mAttributes.tags, "");
+#endif
     mStatus = set(streamType, sampleRate, format, channelMask,
             0 /*frameCount*/, flags, cbf, user, notificationFrames,
             sharedBuffer, false /*threadCanCallJava*/, sessionId, transferType, offloadInfo,
@@ -563,14 +575,18 @@ status_t AudioTrack::set(
     mAuxEffectId = 0;
     mFlags = flags;
     mCbf = cbf;
-
 #ifdef QCOM_DIRECTTRACK
+    status_t status;
+    audio_io_handle_t output = AUDIO_IO_HANDLE_NONE;
+   
+
     if (flags & AUDIO_OUTPUT_FLAG_LPA || flags & AUDIO_OUTPUT_FLAG_TUNNEL) {
-        audio_io_handle_t output = AudioSystem::getOutputForAttr(&mAttributes, &output,
-                                                        (audio_session_t)mSessionId, &streamType,
-                                                        mSampleRate, mFormat, mChannelMask,
-                                                        mFlags, mOffloadInfo);
-    if (output == AUDIO_IO_HANDLE_NONE) {
+         AudioSystem::getOutputForAttr(&mAttributes, &output,
+                                            (audio_session_t)mSessionId, &streamType, 
+                                             mSampleRate, mFormat,mChannelMask, 
+                                             mFlags, mOffloadInfo); 
+
+    if (status != NO_ERROR && output == AUDIO_IO_HANDLE_NONE) {
         ALOGE("Could not get audio output for stream type %d, usage %d, sample rate %u, format %#x,"
               " channel mask %#x, flags %#x",
               mStreamType, mAttributes.usage, mSampleRate, mFormat, mChannelMask, mFlags);

@@ -1623,7 +1623,8 @@ status_t ACodec::configureCodec(
     if (video) {
         // determine need for software renderer
         bool usingSwRenderer = false;
-        if (haveNativeWindow && mComponentName.startsWith("OMX.google.")) {
+        if (haveNativeWindow && (mComponentName.startsWith("OMX.google.") ||
+                                 mComponentName.startsWith("OMX.ffmpeg."))) {
             usingSwRenderer = true;
             haveNativeWindow = false;
         }
@@ -2316,17 +2317,13 @@ status_t ACodec::setupFlacCodec(
     return setupRawAudioFormat(
             kPortIndexInput,
             sampleRate,
-<<<<<<< HEAD
-            numChannels);
+            numChannels, bitsPerSample);
 #else
     return setupRawAudioFormat(
             encoder ? kPortIndexInput : kPortIndexOutput,
             sampleRate,
-            numChannels);
-#endif
-=======
             numChannels, bitsPerSample);
->>>>>>> 7d0bbc1... stagefright: More bit depth plumbing
+#endif
 }
 
 status_t ACodec::setupRawAudioFormat(

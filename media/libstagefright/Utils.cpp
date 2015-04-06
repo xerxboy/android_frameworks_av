@@ -282,20 +282,8 @@ status_t convertMetaDataToMessage(
         const uint8_t *ptr = (const uint8_t *)data;
 
         CHECK(size >= 7);
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-        //CHECK_EQ((unsigned)ptr[0], 1u);  // configurationVersion == 1
-<<<<<<< HEAD
->>>>>>> 1d8fcf2... libstagefright: Extended media support via FFMPEG
-        uint8_t profile = ptr[1] & 31;
-        uint8_t level = ptr[12];
-=======
-=======
->>>>>>> e233453... mpeg2ts: Add support for parsing HEVC stream in MPEG2 TS container
         uint8_t profile __unused = ptr[1] & 31;
         uint8_t level __unused = ptr[12];
->>>>>>> 6acf77a... Stagefright: Fix unused variables, functions, values
         ptr += 22;
         size -= 22;
 
