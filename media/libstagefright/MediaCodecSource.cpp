@@ -553,6 +553,9 @@ void MediaCodecSource::signalEOS(status_t err) {
             mOutputBufferQueue.clear();
             mEncoderReachedEOS = true;
             mErrorCode = err;
+            if (err == OMX_ErrorHardware) {
+                mErrorCode = ERROR_IO;
+            }
             mOutputBufferCond.signal();
         }
 
@@ -630,7 +633,7 @@ status_t MediaCodecSource::feedEncoderInputBuffers() {
             status_t err = mEncoder->getInputBuffer(bufferIndex, &inbuf);
             if (err != OK || inbuf == NULL) {
                 mbuf->release();
-                signalEOS();
+                signalEOS(err);
                 break;
             }
 
@@ -773,7 +776,7 @@ void MediaCodecSource::onMessageReceived(const sp<AMessage> &msg) {
             sp<ABuffer> outbuf;
             status_t err = mEncoder->getOutputBuffer(index, &outbuf);
             if (err != OK || outbuf == NULL) {
-                signalEOS();
+                signalEOS(err);
                 break;
             }
 
@@ -834,7 +837,7 @@ void MediaCodecSource::onMessageReceived(const sp<AMessage> &msg) {
             CHECK(msg->findInt32("err", &err));
             ALOGE("Encoder (%s) reported error : 0x%x",
                     mIsVideo ? "video" : "audio", err);
-            signalEOS();
+            signalEOS(err);
        }
        break;
     }
