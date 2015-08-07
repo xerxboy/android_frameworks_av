@@ -1356,8 +1356,6 @@ void OMXNodeInstance::freeActiveBuffers() {
     }
 }
 
-#ifdef __LP64__
-
 OMX::buffer_id OMXNodeInstance::makeBufferID(OMX_BUFFERHEADERTYPE *bufferHeader) {
     if (bufferHeader == NULL) {
         return 0;
@@ -1399,24 +1397,5 @@ void OMXNodeInstance::invalidateBufferID(OMX::buffer_id buffer) {
     mBufferHeaderToBufferID.removeItem(mBufferIDToBufferHeader.valueFor(buffer));
     mBufferIDToBufferHeader.removeItem(buffer);
 }
-
-#else
-
-OMX::buffer_id OMXNodeInstance::makeBufferID(OMX_BUFFERHEADERTYPE *bufferHeader) {
-    return (OMX::buffer_id)bufferHeader;
-}
-
-OMX_BUFFERHEADERTYPE *OMXNodeInstance::findBufferHeader(OMX::buffer_id buffer) {
-    return (OMX_BUFFERHEADERTYPE *)buffer;
-}
-
-OMX::buffer_id OMXNodeInstance::findBufferID(OMX_BUFFERHEADERTYPE *bufferHeader) {
-    return (OMX::buffer_id)bufferHeader;
-}
-
-void OMXNodeInstance::invalidateBufferID(OMX::buffer_id buffer __unused) {
-}
-
-#endif
 
 }  // namespace android
