@@ -1231,7 +1231,8 @@ status_t PlaylistFetcher::extractAndQueueAccessUnitsFromTs(const sp<ABuffer> &bu
     buffer->setRange(buffer->offset() + offset, buffer->size() - offset);
 
     status_t err = OK;
-    for (size_t i = mPacketSources.size(); i-- > 0;) {
+    for (size_t i = mPacketSources.size(); i > 0;) {
+        i--;
         sp<AnotherPacketSource> packetSource = mPacketSources.valueAt(i);
 
         const char *key;
@@ -1422,7 +1423,8 @@ status_t PlaylistFetcher::extractAndQueueAccessUnitsFromTs(const sp<ABuffer> &bu
     }
 
     if (err != OK) {
-        for (size_t i = mPacketSources.size(); i-- > 0;) {
+        for (size_t i = mPacketSources.size(); i > 0;) {
+            i--;
             sp<AnotherPacketSource> packetSource = mPacketSources.valueAt(i);
             packetSource->clear();
         }
