@@ -177,6 +177,14 @@ ifeq ($(DTS_CODEC_M_), true)
   LOCAL_CFLAGS += -DDTS_CODEC_M_
 endif
 
+ifeq ($(BOARD_USE_SAMSUNG_CAMERAFORMAT_NV21), true)
+# This needs flag requires the following string constant in
+# CameraParametersExtra.h:
+#
+# const char CameraParameters::PIXEL_FORMAT_YUV420SP_NV21[] = "nv21";
+LOCAL_CFLAGS += -DUSE_SAMSUNG_CAMERAFORMAT_NV21
+endif
+
 LOCAL_MODULE:= libstagefright
 
 LOCAL_MODULE_TAGS := optional
