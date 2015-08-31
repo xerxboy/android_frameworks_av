@@ -526,7 +526,9 @@ void AudioPlayer::reset() {
     mPositionTimeMediaUs = -1;
     mPositionTimeRealUs = -1;
     mSeeking = false;
+//#ifdef USE_ALP_AUDIO
     mSeekTimeUs = 0;
+//#endif
     mReachedEOS = false;
     mFinalStatus = OK;
     mStarted = false;
