@@ -92,11 +92,8 @@ public:
     virtual status_t read(
             MediaBuffer **buffer, const ReadOptions *options = NULL);
 
-<<<<<<< HEAD
-=======
     virtual status_t pause();
 
->>>>>>> e79ee64... stagefright: Squashed commit of pause/resume features
     /**
      * Check whether a CameraSource object is properly initialized.
      * Must call this method before stop().
