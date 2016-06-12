@@ -50,7 +50,6 @@ LOCAL_C_INCLUDES := \
 LOCAL_CFLAGS := \
         -D"OSCL_UNUSED_ARG(x)=(void)(x)"
 
-LOCAL_CFLAGS += -Werror
 
 LOCAL_MODULE := libstagefright_mp3dec
 
@@ -71,7 +70,6 @@ LOCAL_C_INCLUDES := \
         $(LOCAL_PATH)/src \
         $(LOCAL_PATH)/include
 
-LOCAL_CFLAGS += -Werror
 
 LOCAL_SHARED_LIBRARIES := \
         libstagefright libstagefright_omx libstagefright_foundation libutils liblog
