@@ -23,6 +23,7 @@ LOCAL_C_INCLUDES := \
     $(call include-path-for, audio-effects) \
     $(call include-path-for, audio-utils) \
     $(TOPDIR)frameworks/av/services/audiopolicy/common/include \
+    $(TOPDIR)frameworks/av/services/audiopolicy/common/managerdefinitions/include \
     $(TOPDIR)frameworks/av/services/audiopolicy/engine/interface \
 
 LOCAL_SHARED_LIBRARIES := \
@@ -83,6 +84,7 @@ endif
 
 LOCAL_C_INCLUDES += \
     $(TOPDIR)frameworks/av/services/audiopolicy/common/include \
+    $(TOPDIR)frameworks/av/services/audiopolicy/common/managerdefinitions/include \
     $(TOPDIR)frameworks/av/services/audiopolicy/engine/interface \
 
 LOCAL_STATIC_LIBRARIES := \
@@ -108,6 +110,7 @@ LOCAL_STATIC_LIBRARIES := \
 
 LOCAL_C_INCLUDES += \
     $(TOPDIR)frameworks/av/services/audiopolicy/common/include \
+    $(TOPDIR)frameworks/av/services/audiopolicy/common/managerdefinitions/include \
     $(TOPDIR)frameworks/av/services/audiopolicy/engine/interface \
 
 LOCAL_MODULE:= libaudiopolicymanager
