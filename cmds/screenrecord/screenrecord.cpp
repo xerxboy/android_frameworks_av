@@ -59,11 +59,18 @@
 using namespace android;
 
 static const uint32_t kMinBitRate = 100000;         // 0.1Mbps
-static const uint32_t kMaxBitRate = 200 * 1000000;  // 200Mbps
-static const uint32_t kMaxTimeLimitSec = 180;       // 3 minutes
+static const uint32_t kMaxBitRate = 100 * 1000000;  // 100Mbps
+static const uint32_t kMaxTimeLimitSec = 3600;       // 1 Hour
 static const uint32_t kFallbackWidth = 1280;        // 720p
 static const uint32_t kFallbackHeight = 720;
 static const char* kMimeTypeAvc = "video/avc";
+
+// Build-time parameters.
+#ifdef LANDSCAPE_ONLY
+static bool gLandscapeOnly = true;          // Only encode in landscape
+#else
+static bool gLandscapeOnly = false;
+#endif
 
 // Command-line parameters.
 static bool gVerbose = false;           // chatty on stdout
@@ -563,6 +570,17 @@ static status_t recordScreen(const char* fileName) {
         gVideoHeight = rotated ? mainDpyInfo.w : mainDpyInfo.h;
     }
 
+    // Some devices cannot handle encoding tall height (> 720), so we
+    // compensate by encoding in landscape and rotating
+    bool autoRotated = false;
+    if (gLandscapeOnly && !gSizeSpecified && gVideoHeight > gVideoWidth) {
+        int newWidth = gVideoHeight;
+        gVideoHeight = gVideoWidth;
+        gVideoWidth = newWidth;
+        gRotate = !gRotate;
+        autoRotated = true;
+    }
+
     // Configure and start the encoder.
     sp<MediaCodec> encoder;
     sp<FrameOutput> frameOutput;
@@ -648,7 +666,7 @@ static status_t recordScreen(const char* fileName) {
             muxer = new MediaMuxer(fd, MediaMuxer::OUTPUT_FORMAT_MPEG_4);
             close(fd);
             if (gRotate) {
-                muxer->setOrientationHint(90);  // TODO: does this do anything?
+                muxer->setOrientationHint(autoRotated ? 270 : 90);  // TODO: does this do anything?
             }
             break;
         }
