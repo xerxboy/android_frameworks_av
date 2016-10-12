@@ -54,6 +54,10 @@ status_t CameraFlashlight::createFlashlightControl(const String8& cameraId) {
         return INVALID_OPERATION;
     }
 
+#ifdef NO_CAMERA_FLASH
+    return INVALID_OPERATION;
+#endif
+
     if (mProviderManager->supportSetTorchMode(cameraId.string())) {
         mFlashControl = new ProviderFlashControl(mProviderManager);
     } else {
