@@ -56,6 +56,7 @@
 
 #include "ESDS.h"
 #include <media/stagefright/Utils.h>
+#include "mediaplayerservice/AVNuExtensions.h"
 
 namespace android {
 
@@ -218,7 +219,7 @@ void NuPlayer::setDataSourceAsync(const sp<IStreamSource> &source) {
     msg->post();
 }
 
-static bool IsHTTPLiveURL(const char *url) {
+bool NuPlayer::IsHTTPLiveURL(const char *url) {
     if (!strncasecmp("http://", url, 7)
             || !strncasecmp("https://", url, 8)
             || !strncasecmp("file://", url, 7)) {
@@ -789,6 +790,10 @@ void NuPlayer::onMessageReceived(const sp<AMessage> &msg) {
                     sp<AMessage> params = new AMessage();
                     params->setFloat("operating-rate", rate * mPlaybackSettings.mSpeed);
                     mVideoDecoder->setParameters(params);
+
+                    params = new AMessage();
+                    params->setFloat("playback-speed", mPlaybackSettings.mSpeed);
+                    mVideoDecoder->setParameters(params);
                 }
             }
 
@@ -1158,8 +1163,18 @@ void NuPlayer::onMessageReceived(const sp<AMessage> &msg) {
                 if (reason == Renderer::kDueToTimeout && !(mPaused && mOffloadAudio)) {
                     // TimeoutWhenPaused is only for offload mode.
                     ALOGW("Receive a stale message for teardown.");
+                    mRenderer->signalAudioTearDownComplete();
                     break;
                 }
+                closeAudioSink();
+                mRenderer->flush(
+                        true /* audio */, false /* notifyComplete */);
+                if (mVideoDecoder != NULL) {
+                    mRenderer->flush(
+                            false /* audio */, false /* notifyComplete */);
+                }
+                mRenderer->signalAudioTearDownComplete();
+
                 int64_t positionUs;
                 if (!msg->findInt64("positionUs", &positionUs)) {
                     positionUs = mPreviousSeekTimeUs;
@@ -1187,6 +1202,9 @@ void NuPlayer::onMessageReceived(const sp<AMessage> &msg) {
                     new FlushDecoderAction(
                         FLUSH_CMD_SHUTDOWN /* audio */,
                         FLUSH_CMD_SHUTDOWN /* video */));
+
+            mDeferredActions.push_back(
+                    new SimpleAction(&NuPlayer::closeAudioSink));
 
             mDeferredActions.push_back(
                     new SimpleAction(&NuPlayer::performReset));
@@ -1342,7 +1360,9 @@ void NuPlayer::onStart(int64_t startPositionUs) {
 
     sp<MetaData> audioMeta = mSource->getFormatMeta(true /* audio */);
     ALOGV_IF(audioMeta == NULL, "no metadata for audio source");  // video only stream
+
     audio_stream_type_t streamType = AUDIO_STREAM_MUSIC;
+
     if (mAudioSink != NULL) {
         streamType = mAudioSink->getAudioStreamType();
     }
@@ -1359,7 +1379,7 @@ void NuPlayer::onStart(int64_t startPositionUs) {
     sp<AMessage> notify = new AMessage(kWhatRendererNotify, this);
     ++mRendererGeneration;
     notify->setInt32("generation", mRendererGeneration);
-    mRenderer = new Renderer(mAudioSink, notify, flags);
+    mRenderer = AVNuFactory::get()->createRenderer(mAudioSink, notify, flags);
     mRendererLooper = new ALooper;
     mRendererLooper->setName("NuPlayerRenderer");
     mRendererLooper->start(false, false, ANDROID_PRIORITY_AUDIO);
@@ -1489,7 +1509,7 @@ void NuPlayer::tryOpenAudioSinkForOffload(
     // is possible; otherwise the decoders call the renderer openAudioSink directly.
 
     status_t err = mRenderer->openAudioSink(
-            format, true /* offloadOnly */, hasVideo, AUDIO_OUTPUT_FLAG_NONE, &mOffloadAudio);
+            format, true /* offloadOnly */, hasVideo, AUDIO_OUTPUT_FLAG_NONE, &mOffloadAudio, mSource->isStreaming());
     if (err != OK) {
         // Any failure we turn off mOffloadAudio.
         mOffloadAudio = false;
@@ -1627,16 +1647,17 @@ status_t NuPlayer::instantiateDecoder(
         if (checkAudioModeChange) {
             determineAudioModeChange(format);
         }
-        if (mOffloadAudio) {
+        if (mOffloadAudio)
             mSource->setOffloadAudio(true /* offload */);
 
+        if (mOffloadAudio) {
             const bool hasVideo = (mSource->getFormat(false /*audio */) != NULL);
             format->setInt32("has-video", hasVideo);
-            *decoder = new DecoderPassThrough(notify, mSource, mRenderer);
+            *decoder = AVNuFactory::get()->createPassThruDecoder(notify, mSource, mRenderer);
         } else {
+            AVNuUtils::get()->setCodecOutputFormat(format);
             mSource->setOffloadAudio(false /* offload */);
-
-            *decoder = new Decoder(notify, mSource, mPID, mRenderer);
+            *decoder = AVNuFactory::get()->createDecoder(notify, mSource, mPID, mRenderer);
         }
     } else {
         sp<AMessage> notify = new AMessage(kWhatVideoNotify, this);
@@ -1680,6 +1701,22 @@ status_t NuPlayer::instantiateDecoder(
             mediaBufs.clear();
             ALOGE("Secure source didn't support secure mediaBufs.");
             return err;
+        }
+    }
+
+    if (!audio) {
+        sp<MetaData> fileMeta = getFileMeta();
+        if (fileMeta == NULL) {
+            ALOGW("source has video meta but not file meta");
+            return -1;
+        }
+
+        int32_t videoTemporalLayerCount = 0;
+        if (fileMeta->findInt32(kKeyTemporalLayerCount, &videoTemporalLayerCount)
+                && videoTemporalLayerCount > 0) {
+            sp<AMessage> params = new AMessage();
+            params->setInt32("temporal-layer-count", videoTemporalLayerCount);
+            (*decoder)->setParameters(params);
         }
     }
     return OK;
@@ -2309,6 +2346,13 @@ void NuPlayer::onSourceNotify(const sp<AMessage> &msg) {
         case Source::kWhatDrmNoLicense:
         {
             notifyListener(MEDIA_ERROR, MEDIA_ERROR_UNKNOWN, ERROR_DRM_NO_LICENSE);
+            break;
+        }
+
+        case Source::kWhatRTCPByeReceived:
+        {
+            ALOGV("notify the client that Bye message is received");
+            notifyListener(MEDIA_INFO, 2000, 0);
             break;
         }
 
