@@ -2001,7 +2001,6 @@ void CameraService::loadSound() {
         mSoundPlayer[SOUND_RECORDING_START] = NULL;
         mSoundPlayer[SOUND_RECORDING_STOP] = NULL;
     }
-
 }
 
 void CameraService::releaseSound() {
