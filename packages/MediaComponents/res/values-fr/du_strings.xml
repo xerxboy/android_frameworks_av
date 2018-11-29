@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--  Copyright 2018 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+ -->
+
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="mr_button_content_description">Bouton Diffuser</string>
+    <string name="mr_cast_button_disconnected">Bouton Diffuser. Déconnecté</string>
+    <string name="mr_cast_button_connecting">Bouton Diffuser. Connexion en cours…</string>
+    <string name="mr_cast_button_connected">Bouton Diffuser. Connecté</string>
+    <string name="mr_chooser_title">Diffuser sur</string>
+
+    <!-- Text for error alert when a video container is not valid for progressive download/playback. -->
+    <string name="VideoView2_error_text_invalid_progressive_playback">Vidéo incompatible pour la diffusion sur cet appareil</string>
+    <!-- Text for error alert when a video cannot be played. It can be used by any app. -->
+    <string name="VideoView2_error_text_unknown">Impossible de lire cette vidéo</string>
+    <!-- Button to close error alert when a video cannot be played. -->
+    <string name="VideoView2_error_button">OK</string>
+
+    <!-- Text for displaying ad skip wait time. -->
+    <string name="MediaControlView2_ad_skip_wait_time">
+        Vous pouvez passer cette publicité dans <xliff:g id="wait_time" example="5">%1$d</xliff:g> s
+    </string>
+    <!-- Text for displaying ad total remaining time. -->
+    <string name="MediaControlView2_ad_remaining_time">
+        Publicité : <xliff:g id="remaining_time" example="1:15">%1$s</xliff:g> restant
+    </string>
+    <!-- Placeholder text indicating that the user can press the button to go to an external website. -->
+    <string name="MediaControlView2_ad_text">Visiter le site de l\'annonceur</string>
+    <string name="MediaControlView2_subtitle_text">Sous-titres</string>
+    <string name="MediaControlView2_subtitle_off_text">Désactivé</string>
+    <string name="MediaControlView2_audio_track_text">Piste audio</string>
+    <string name="MediaControlView2_audio_track_none_text">Aucune</string>
+    <string name="MediaControlView2_video_quality_text">Qualité vidéo</string>
+    <string name="MediaControlView2_video_quality_auto_text">Auto</string>
+    <string name="MediaControlView2_help_text">Aide et commentaires</string>
+    <string name="MediaControlView2_playback_speed_text">Vitesse de lecture</string>
+    <string-array name="MediaControlView2_playback_speeds">
+        <item>0,25 x</item>
+        <item>0,5 x</item>
+        <item>0,75 x</item>
+        <item>Normale</item>
+        <item>1,25 x</item>
+        <item>1,5 x</item>
+        <item>2 x</item>
+    </string-array>
+
+    <!-- Text for displaying subtitle track number. -->
+    <string name="MediaControlView2_subtitle_track_number_text">
+        Piste <xliff:g id="track_number" example="1">%1$s</xliff:g>
+    </string>
+    <!-- Text for displaying audio track number. -->
+    <string name="MediaControlView2_audio_track_number_text">
+        Piste <xliff:g id="audio_number" example="1">%1$s</xliff:g>
+    </string>
+    <!-- Text for displaying unknown song title. -->
+    <string name="mcv2_music_title_unknown_text">Titre de la chanson inconnu</string>
+    <!-- Text for displaying unknown artist name. -->
+    <string name="mcv2_music_artist_unknown_text">Artiste inconnu</string>
+
+    <!--Content Descriptions -->
+    <string name="mcv2_back_button_desc">Retour</string>
+    <string name="mcv2_overflow_left_button_desc">Afficher plus de boutons</string>
+    <string name="mcv2_overflow_right_button_desc">Retour à la liste de boutons précédente</string>
+    <string name="mcv2_seek_bar_desc">Progression de la lecture</string>
+    <string name="mcv2_settings_button_desc">Réglages</string>
+    <string name="mcv2_video_quality_button_desc">Qualité vidéo</string>
+    <string name="mcv2_cc_is_on">Sous-titres activés. Appuyer pour les masquer.</string>
+    <string name="mcv2_cc_is_off">Sous-titres désactivés. Appuyer pour les afficher.</string>
+    <string name="mcv2_replay_button_desc">Lire à nouveau</string>
+    <string name="mcv2_play_button_desc">Lecture</string>
+    <string name="mcv2_pause_button_desc">Pause</string>
+    <string name="mcv2_previous_button_desc">Média précédent</string>
+    <string name="mcv2_next_button_desc">Média suivant</string>
+    <string name="mcv2_rewind_button_desc">Reculer de 10 secondes</string>
+    <string name="mcv2_ffwd_button_desc">Avancer de 30 secondes</string>
+    <string name="mcv2_launch_button_desc">Lien de démarrage</string>
+    <string name="mcv2_muted_button_desc">Son désactivé. Appuyer pour le réactiver.</string>
+    <string name="mcv2_unmuted_button_desc">Appuyer pour désactiver le son</string>
+    <string name="mcv2_full_screen_button_desc">Plein écran</string>
+</resources>
